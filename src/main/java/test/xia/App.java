@@ -1,5 +1,7 @@
 package test.xia;
 
+import Dao.HibernateFactory.HibernateSessionFactory;
+import Dao.HibernateFactory.SessionFactoryHolder;
 import Dao.PersonDao;
 import Entity.Person;
 import com.xia.configuration.SwitchableSwaggerBundle;
@@ -12,17 +14,9 @@ import io.dropwizard.setup.Environment;
 import resource.HelloWorldResource;
 import resource.PersonResource;
 
-/**
- * Hello world!
- *
- */
+
 public class App extends Application<SystemConfiguration>
 {
-    private final HibernateBundle<SystemConfiguration> hibernate = new HibernateBundle<SystemConfiguration>(Person.class) {
-        public DataSourceFactory getDataSourceFactory(SystemConfiguration configuration) {
-            return configuration.getDataSourceFactory();
-        }
-    };
 
     public static void main( String[] args ) throws Exception {
         new App().run(args);
@@ -37,7 +31,6 @@ public class App extends Application<SystemConfiguration>
     @Override
     public void initialize(Bootstrap<SystemConfiguration> bootstrap) {
         // nothing to do yet
-        bootstrap.addBundle(hibernate);
         bootstrap.addBundle(new SwitchableSwaggerBundle());
     }
 
@@ -45,11 +38,11 @@ public class App extends Application<SystemConfiguration>
     public void run(SystemConfiguration configuration,
                     Environment environment) {
         // nothing to do yet
+        HibernateSessionFactory hibernateSessionFactory = new HibernateSessionFactory();
+        hibernateSessionFactory.initHibernateSessionFactory(configuration,environment);
         final HelloWorldResource resource = new HelloWorldResource(configuration.getTemplate(), configuration.getDefaultName() );
-        final PersonDao dao = new PersonDao(hibernate.getSessionFactory());
-
+        final PersonDao dao = new PersonDao(SessionFactoryHolder.getSessionFactory());
         environment.jersey().register(new PersonResource(dao));
-
-        environment.jersey().register(resource);//environment环境类添加到Jersey服务器中
+        environment.jersey().register(resource);
     }
 }
